@@ -38,9 +38,14 @@ contract Custody is ReentrancyGuard, Ownable {
         holdCustody[_tokenId] = CustodyData(_nft_contract, _tokenId, msg.sender);
     }
 
-    function releaseNFT(uint _tokenId) public onlyOwner {
+    function releaseNFT(address _nft_contract,uint256 tokenId, address wallet) public nonReentrant onlyOwner() {
+      IERC721(_nft_contract).transferFrom(address(this), wallet, tokenId);
+      delete holdCustody[tokenId];
+ }
 
-    }
+  function emergencyDelete(uint256 tokenId) public nonReentrant onlyOwner() {
+      delete holdCustody[tokenId];
+ }
 
      function onERC721Received(
         address,
@@ -50,6 +55,10 @@ contract Custody is ReentrancyGuard, Ownable {
     ) external pure returns (bytes4) {
       require(from == address(0x0), "Cannot Receive NFTs Directly");
       return IERC721Receiver.onERC721Received.selector;
+    }
+
+    function withdrawNative() public payable onlyOwner() {
+    require(payable(msg.sender).send(address(this).balance));
     }
 
 }
